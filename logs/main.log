@@ -1,0 +1,42 @@
+[2021-04-30T12:21:33.647] [INFO] default - Orthanc transfer running.
+[2021-04-30T12:21:33.647] [INFO] default - Query from 20210301.
+[2021-04-30T12:21:33.659] [INFO] default - All sent!
+[2021-04-30T12:22:46.224] [INFO] default - Orthanc transfer running.
+[2021-04-30T12:22:46.225] [INFO] default - Query from 20210301.
+[2021-04-30T12:22:46.237] [INFO] default - All sent!
+[2021-04-30T12:23:42.052] [INFO] default - Orthanc transfer running.
+[2021-04-30T12:23:42.053] [INFO] default - Query from 20210301.
+[2021-04-30T12:23:42.066] [INFO] default - All sent!
+[2021-04-30T12:24:19.361] [INFO] default - Orthanc transfer running.
+[2021-04-30T12:24:19.362] [INFO] default - Query from 20201121.
+[2021-04-30T12:24:19.377] [INFO] default - START job ID: 9abcc9ed-17c1-4f5c-913f-f47e80d4fe99 patient: KENDA^EDUARDO WALTER^^^ accessionNo: R25915939 studyDate: 20210125
+[2021-04-30T12:24:20.423] [INFO] default - READY job ID: 9abcc9ed-17c1-4f5c-913f-f47e80d4fe99 patient: KENDA^EDUARDO WALTER^^^ accessionNo: R25915939 studyDate: 20210125
+[2021-04-30T12:24:20.423] [INFO] default - All sent!
+[2021-04-30T12:24:49.524] [INFO] default - Orthanc transfer running.
+[2021-04-30T12:24:49.524] [INFO] default - Query from 20210321.
+[2021-04-30T12:24:49.536] [INFO] default - All sent!
+[2021-04-30T12:25:50.462] [INFO] default - Orthanc transfer running.
+[2021-04-30T12:25:50.462] [INFO] default - Query from 20210321.
+[2021-04-30T12:25:50.483] [INFO] default - START job ID: 27569c15-5244-4a79-bbd1-cccd11758fa3 patient: VILLANI^GILDA accessionNo: R27525808 studyDate: 20210421
+[2021-04-30T12:25:50.483] [INFO] default - START job ID: 4ed45f29-8c55-4bc2-8754-7dd462664b05 patient: COLETTI^CLAUDIA AUGISTA accessionNo: R27061182 studyDate: 20210421
+[2021-04-30T12:25:50.483] [INFO] default - START job ID: d4197670-2ce5-4e92-a70e-9efc6f5a1f20 patient: SILVA^MONICA NOEMI accessionNo: R27061178 studyDate: 20210421
+[2021-04-30T12:25:50.483] [INFO] default - START job ID: 592a3f55-7a6e-4483-a478-33fa7341e251 patient: DAVICINO^MARCELA PAULA accessionNo: R27525804 studyDate: 20210421
+[2021-04-30T12:25:50.489] [INFO] default - START job ID: 606d8858-29f9-4ad3-8cdd-8b6558b84a26 patient: VALENTINUZZI^MARIA ESTHER accessionNo: R27061174 studyDate: 20210421
+[2021-04-30T12:25:50.489] [INFO] default - START job ID: 6608e6b9-bbce-432b-8d79-6ecf74517c71 patient: LOPEZ^CRUZ LORENA VIVIANA accessionNo: R27049138 studyDate: 20210421
+[2021-04-30T12:25:50.490] [INFO] default - START job ID: ad1cad37-9fc0-457b-b32b-582654349259 patient: RUIZ^RAQUEL NOEMI accessionNo: R28017676 studyDate: 20210421
+[2021-04-30T12:25:50.490] [INFO] default - START job ID: 6cdd8fdb-c61a-4bbb-ba69-f123f311ca1c patient: PRADO^GLADYS accessionNo: R27061171 studyDate: 20210421
+[2021-04-30T12:25:50.491] [INFO] default - START job ID: 4e1be6c3-b0db-45ff-9e0f-b50aa816d9a6 patient: BLANCO^PAOLA CLAUDIA accessionNo: R27525802 studyDate: 20210421
+[2021-04-30T12:25:50.491] [INFO] default - START job ID: fcf262b3-13cb-497e-b3e0-368459247e0f patient: SORAVITO^PAULA ANDREA accessionNo: R27525809 studyDate: 20210421
+[2021-04-30T12:25:50.491] [INFO] default - START job ID: 7e7a8276-86b2-4214-8606-694678256284 patient: PERALTA^MYRIAM SUSANA accessionNo: R27049138 studyDate: 20210420
+[2021-04-30T12:25:56.521] [INFO] default - READY job ID: 4ed45f29-8c55-4bc2-8754-7dd462664b05 patient: COLETTI^CLAUDIA AUGISTA accessionNo: R27061182 studyDate: 20210421
+[2021-04-30T12:25:59.122] [INFO] default - READY job ID: d4197670-2ce5-4e92-a70e-9efc6f5a1f20 patient: SILVA^MONICA NOEMI accessionNo: R27061178 studyDate: 20210421
+[2021-04-30T12:25:59.781] [INFO] default - READY job ID: 27569c15-5244-4a79-bbd1-cccd11758fa3 patient: VILLANI^GILDA accessionNo: R27525808 studyDate: 20210421
+[2021-04-30T12:26:03.675] [INFO] default - READY job ID: 4e1be6c3-b0db-45ff-9e0f-b50aa816d9a6 patient: BLANCO^PAOLA CLAUDIA accessionNo: R27525802 studyDate: 20210421
+[2021-04-30T12:26:07.429] [INFO] default - READY job ID: 606d8858-29f9-4ad3-8cdd-8b6558b84a26 patient: VALENTINUZZI^MARIA ESTHER accessionNo: R27061174 studyDate: 20210421
+[2021-04-30T12:26:09.685] [INFO] default - READY job ID: 7e7a8276-86b2-4214-8606-694678256284 patient: PERALTA^MYRIAM SUSANA accessionNo: R27049138 studyDate: 20210420
+[2021-04-30T12:26:12.168] [INFO] default - READY job ID: 6cdd8fdb-c61a-4bbb-ba69-f123f311ca1c patient: PRADO^GLADYS accessionNo: R27061171 studyDate: 20210421
+[2021-04-30T12:26:12.927] [INFO] default - READY job ID: fcf262b3-13cb-497e-b3e0-368459247e0f patient: SORAVITO^PAULA ANDREA accessionNo: R27525809 studyDate: 20210421
+[2021-04-30T12:26:19.712] [INFO] default - READY job ID: 592a3f55-7a6e-4483-a478-33fa7341e251 patient: DAVICINO^MARCELA PAULA accessionNo: R27525804 studyDate: 20210421
+[2021-04-30T12:26:20.078] [INFO] default - READY job ID: ad1cad37-9fc0-457b-b32b-582654349259 patient: RUIZ^RAQUEL NOEMI accessionNo: R28017676 studyDate: 20210421
+[2021-04-30T12:26:21.895] [INFO] default - READY job ID: 6608e6b9-bbce-432b-8d79-6ecf74517c71 patient: LOPEZ^CRUZ LORENA VIVIANA accessionNo: R27049138 studyDate: 20210421
+[2021-04-30T12:26:21.895] [INFO] default - All sent!
