@@ -5,7 +5,12 @@ var async = require("async");
 const config = require("./config.js");
 const URL = config.orthancUrl + ":" + config.orthancPort;
 
+var errorCount = 10;
 var studies = [];
+
+function padLeft(n) {
+  return ("00" + n).slice(-2);
+}
 
 // logger
 log4js.configure({
@@ -29,169 +34,166 @@ log4js.configure({
 const logger = log4js.getLogger();
 logger.info("Orthanc transfer running.");
 
-// check job status
-function jobsStatus() {
-  async.forEachOf(studies, (value, key, callback) => {
+// find studies to send
+function find(callback) {
+  var d = new Date();
+  d.setDate(d.getDate() - config.prevDays);
 
-    if (studies[key].ready == true) {
+  let dicomDate =
+    d.getFullYear() + padLeft(d.getMonth() + 1) + padLeft(d.getDate());
+  logger.info("Query from " + dicomDate + ".");
+
+  let query = {
+    Level: "Study",
+    Query: {
+      Modality: config.modality,
+      StudyDate: dicomDate + "-",
+    },
+    Expand: true,
+  };
+
+  axios
+    .post(URL + "/tools/find", query)
+    .then(function (response) {
+      // save response
+      response.data.forEach((p) => {
+        let id,
+          accessionNumber,
+          studyDate,
+          studyInstanceUID,
+          patientName,
+          patientID = "";
+
+        if (typeof p.ID !== "undefined") {
+          id = p.ID;
+        }
+
+        if (typeof p.MainDicomTags.AccessionNumber !== "undefined") {
+          accessionNumber = p.MainDicomTags.AccessionNumber;
+        }
+
+        if (typeof p.MainDicomTags.StudyDate !== "undefined") {
+          studyDate = p.MainDicomTags.StudyDate;
+        }
+
+        if (typeof p.MainDicomTags.StudyInstanceUID !== "undefined") {
+          studyInstanceUID = p.MainDicomTags.StudyInstanceUID;
+        }
+
+        if (typeof p.PatientMainDicomTags.PatientName !== "undefined") {
+          patientName = p.PatientMainDicomTags.PatientName;
+        }
+
+        if (typeof p.PatientMainDicomTags.PatientID !== "undefined") {
+          patientID = p.PatientMainDicomTags.PatientID;
+        }
+
+        if (p.IsStable) {
+          studies.push({
+            id: id,
+            accessionNumber: accessionNumber,
+            studyDate: studyDate,
+            studyInstanceUID: studyInstanceUID,
+            patientName: patientName,
+            patientId: patientID,
+            jobId: "",
+          });
+        }
+      });
+
+      // continue
       callback();
-    } else {
-      
-      axios
-        .get(URL + "/jobs/" + studies[key].jobId)
-        .then(function (response) {
-          if (response.data.Progress == 100) {
-            logger.info(
-              "READY job ID: " +
-                studies[key].jobId +
-                " patient: " +
-                studies[key].patientName +
-                " accessionNo: " +
-                studies[key].accessionNumber +
-                " studyDate: " +
-                studies[key].studyDate
-            );
-            studies[key].ready = true;
-          }
-          callback();
-        })
-        .catch(function (error) {
-          callback(error);
-        });
-    }
-
-  }, (error) => {
-    if (error) console.error(error);
-
-    let allReady = true;
-
-    for(let i=0;i<studies.length;i++) {
-      if (studies[i].ready == false) {
-        allReady = false;
-        break;
-      }
-    }
-
-    if (allReady) {
-      logger.info("All sent!");
-    } else {
-      jobsStatus();
-    }
-  });
-}
-
-// first query
-var d = new Date();
-d.setDate(d.getDate()-config.prevDays);
-
-function padLeft(n){
-  return ("00" + n).slice(-2);
-}
-
-let dicomDate = d.getFullYear() + padLeft(d.getMonth()+1) + padLeft(d.getDate());
-logger.info("Query from "+ dicomDate+".");
-
-let query = {
-  Level: "Study",
-  Query: {
-    Modality: "MG",
-    StudyDate: dicomDate+"-",
-  },
-  Expand: true,
-};
-
-axios
-  .post(URL + "/tools/find", query)
-  .then(function (response) {
-    // search studies
-    response.data.forEach((p) => {
-      let id,
-        accessionNumber,
-        studyDate,
-        studyInstanceUID,
-        patientName,
-        patientID = "";
-
-      if (typeof p.ID !== "undefined") {
-        id = p.ID;
-      }
-
-      if (typeof p.MainDicomTags.AccessionNumber !== "undefined") {
-        accessionNumber = p.MainDicomTags.AccessionNumber;
-      }
-
-      if (typeof p.MainDicomTags.StudyDate !== "undefined") {
-        studyDate = p.MainDicomTags.StudyDate;
-      }
-
-      if (typeof p.MainDicomTags.StudyInstanceUID !== "undefined") {
-        studyInstanceUID = p.MainDicomTags.StudyInstanceUID;
-      }
-
-      if (typeof p.PatientMainDicomTags.PatientName !== "undefined") {
-        patientName = p.PatientMainDicomTags.PatientName;
-      }
-
-      if (typeof p.PatientMainDicomTags.PatientID !== "undefined") {
-        patientID = p.PatientMainDicomTags.PatientID;
-      }
-
-      if (p.IsStable) {
-        studies.push({
-          id: id,
-          accessionNumber: accessionNumber,
-          studyDate: studyDate,
-          studyInstanceUID: studyInstanceUID,
-          patientName: patientName,
-          patientId: patientID,
-          jobId: "",
-          ready: false,
-        });
-      }
+    })
+    .catch(function (error) {
+      // error
+      callback(error);
     });
+}
 
-    // send studies
-    async.forEachOf(studies, (value, key, callback) => {
+function checkOne() {
+  setTimeout(function() {
 
-      axios
-        .post(URL + "/modalities/" + config.destination + "/store", {
-          Asynchronous: true,
-          Permissive: true,
-          Resources: [studies[key].id],
-        })
-        .then(function (response) {
-          let jobId = "";
-
-          if (typeof response.data.ID !== "undefined") {
-            jobId = response.data.ID;
-          }
-
+    axios
+      .get(URL + "/jobs/" + studies[0].jobId)
+      .then(function (response) {
+        if (response.data.Progress == 100) {
           logger.info(
-            "START job ID: " +
-              jobId +
+            "READY job ID: " +
+              studies[0].jobId +
               " patient: " +
-              studies[key].patientName +
+              studies[0].patientName +
               " accessionNo: " +
-              studies[key].accessionNumber +
+              studies[0].accessionNumber +
               " studyDate: " +
-              studies[key].studyDate
+              studies[0].studyDate
           );
+          
+          studies.shift();
+          sendOne();
+        } else {
+          checkOne();
+        }
+      })
+      .catch(function (error) {
+        logger.error(error);
+        if (errorCount) {
+          errorCount = errorCount-1;
+          checkOne();
+        } else {
+          throw error;
+        }
+      });
 
-          studies[key].jobId = jobId;
-          callback();
-        })
-        .catch(function (error) {
-          callback(error);
-        });
+  }, 3000);
+}
 
-    }, (error) => {
-      if (error) console.error(error);
-    
-      // starts jobs pooling
-      jobsStatus();
-    });
+function sendOne() {
+  if (studies.length) {
 
-  })
-  .catch(function (error) {
+    axios
+      .post(URL + "/modalities/" + config.destination + "/store", {
+        Asynchronous: true,
+        Permissive: true,
+        Resources: [studies[0].id],
+      })
+      .then(function (response) {
+        if (typeof response.data.ID !== "undefined") {
+          studies[0].jobId = response.data.ID;
+        }
+
+        logger.info(
+          "START job ID: " +
+            studies[0].jobId +
+            " patient: " +
+            studies[0].patientName +
+            " accessionNo: " +
+            studies[0].accessionNumber +
+            " studyDate: " +
+            studies[0].studyDate
+        );
+
+        checkOne();
+      })
+      .catch(function (error) {
+        logger.error(error);
+        if (errorCount) {
+          errorCount = errorCount-1;
+          sendOne();
+        } else {
+          throw error;
+        }
+      });
+
+  } else {
+    logger.info("Nothing to send!");
+  }
+}
+
+find((error, studies) => {
+  if (error) {
+    logger.error(error);
     throw error;
-  });
+  } else {
+    sendOne();
+  }
+});
