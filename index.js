@@ -2,7 +2,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 var log4js = require("log4js");
 var axios = require("axios");
-var async = require("async");
+const https = require('https');
 
 const config = require("./config.js");
 const URL = config.orthancUrl + ":" + config.orthancPort;
