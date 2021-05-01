@@ -1,3 +1,5 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 var log4js = require("log4js");
 var axios = require("axios");
 var async = require("async");
@@ -53,7 +55,11 @@ function find(callback) {
   };
 
   axios
-    .post(URL + "/tools/find", query)
+    .post(URL + "/tools/find", query, {
+      httpsAgent: new https.Agent({
+          rejectUnauthorized: false
+      })
+    })
     .then(function (response) {
       // save response
       response.data.forEach((p) => {
@@ -114,7 +120,11 @@ function checkOne() {
   setTimeout(function() {
 
     axios
-      .get(URL + "/jobs/" + studies[0].jobId)
+      .get(URL + "/jobs/" + studies[0].jobId, {
+        httpsAgent: new https.Agent({
+            rejectUnauthorized: false
+        })
+      })
       .then(function (response) {
         if (response.data.Progress == 100) {
           logger.info(
@@ -155,6 +165,9 @@ function sendOne() {
         Asynchronous: true,
         Permissive: true,
         Resources: [studies[0].id],
+        httpsAgent: new https.Agent({
+          rejectUnauthorized: false
+        })
       })
       .then(function (response) {
         if (typeof response.data.ID !== "undefined") {
