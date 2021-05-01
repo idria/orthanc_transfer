@@ -5,7 +5,6 @@ var axios = require("axios");
 const https = require('https');
 
 const config = require("./config.js");
-const URL = config.orthancUrl + ":" + config.orthancPort;
 
 var errorCount = 10;
 var studies = [];
@@ -55,7 +54,7 @@ function find(callback) {
   };
 
   axios
-    .post(URL + "/tools/find", query, {
+    .post(config.orthancUrl + "/tools/find", query, {
       httpsAgent: new https.Agent({
           rejectUnauthorized: false
       })
@@ -120,7 +119,7 @@ function checkOne() {
   setTimeout(function() {
 
     axios
-      .get(URL + "/jobs/" + studies[0].jobId, {
+      .get(config.orthancUrl + "/jobs/" + studies[0].jobId, {
         httpsAgent: new https.Agent({
             rejectUnauthorized: false
         })
@@ -161,7 +160,7 @@ function sendOne() {
   if (studies.length) {
 
     axios
-      .post(URL + "/modalities/" + config.destination + "/store", {
+      .post(config.orthancUrl + "/modalities/" + config.destination + "/store", {
         Asynchronous: true,
         Permissive: true,
         Resources: [studies[0].id],
@@ -202,7 +201,7 @@ function sendOne() {
   }
 }
 
-find((error, studies) => {
+find(function(error) {
   if (error) {
     logger.error(error);
     throw error;
