@@ -47,7 +47,7 @@ function find(callback) {
   let query = {
     Level: "Study",
     Query: {
-      Modality: config.modality,
+      ModalitiesInStudy: config.modality,
       StudyDate: dicomDate + "-",
     },
     Expand: true,
