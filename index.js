@@ -3,17 +3,28 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 var log4js = require("log4js");
 var axios = require("axios");
 const https = require('https');
-
 const config = require("./config.js");
 
+const ASYNC_JOBS = 5;
 var errorCount = 10;
-var studies = [];
 
-function padLeft(n) {
-  return ("00" + n).slice(-2);
+// Create studies queues
+var studies = [];
+for(let i=0;i<ASYNC_JOBS; i++) {
+  if (typeof studies[i] === 'undefined') {
+    studies[i] = [];
+  }
 }
 
-// logger
+// HTTPS configuration
+var httpsConfig = {
+  httpsAgent: new https.Agent({
+    rejectUnauthorized: false
+  }),
+  minVersion: "TLSv1.2",
+};
+
+// Setup logger
 log4js.configure({
   appenders: {
     everything: {
@@ -35,8 +46,12 @@ log4js.configure({
 const logger = log4js.getLogger();
 logger.info("Orthanc transfer running.");
 
-// find studies to send
+// Find studies to send and split into queues
 function find(callback) {
+  function padLeft(n) {
+    return ("00" + n).slice(-2);
+  }
+
   var d = new Date();
   d.setDate(d.getDate() - config.prevDays);
 
@@ -53,15 +68,12 @@ function find(callback) {
     Expand: true,
   };
 
+  let selector = 0;
+
   axios
-    .post(config.orthancUrl + "/tools/find", query, {
-      httpsAgent: new https.Agent({
-          rejectUnauthorized: false
-      })
-    })
-    .then(function (response) {
-      // save response
-      response.data.forEach((p) => {
+    .post(config.orthancUrl + "/tools/find", query, httpsConfig)
+    .then(function (resp) {
+      for(let i=0;i<resp.data.length;i++) {
         let id,
           accessionNumber,
           studyDate,
@@ -69,32 +81,32 @@ function find(callback) {
           patientName,
           patientID = "";
 
-        if (typeof p.ID !== "undefined") {
-          id = p.ID;
+        if (typeof resp.data[i].ID !== "undefined") {
+          id = resp.data[i].ID;
         }
 
-        if (typeof p.MainDicomTags.AccessionNumber !== "undefined") {
-          accessionNumber = p.MainDicomTags.AccessionNumber;
+        if (typeof resp.data[i].MainDicomTags.AccessionNumber !== "undefined") {
+          accessionNumber = resp.data[i].MainDicomTags.AccessionNumber;
         }
 
-        if (typeof p.MainDicomTags.StudyDate !== "undefined") {
-          studyDate = p.MainDicomTags.StudyDate;
+        if (typeof resp.data[i].MainDicomTags.StudyDate !== "undefined") {
+          studyDate = resp.data[i].MainDicomTags.StudyDate;
         }
 
-        if (typeof p.MainDicomTags.StudyInstanceUID !== "undefined") {
-          studyInstanceUID = p.MainDicomTags.StudyInstanceUID;
+        if (typeof resp.data[i].MainDicomTags.StudyInstanceUID !== "undefined") {
+          studyInstanceUID = resp.data[i].MainDicomTags.StudyInstanceUID;
         }
 
-        if (typeof p.PatientMainDicomTags.PatientName !== "undefined") {
-          patientName = p.PatientMainDicomTags.PatientName;
+        if (typeof resp.data[i].PatientMainDicomTags.PatientName !== "undefined") {
+          patientName = resp.data[i].PatientMainDicomTags.PatientName;
         }
 
-        if (typeof p.PatientMainDicomTags.PatientID !== "undefined") {
-          patientID = p.PatientMainDicomTags.PatientID;
+        if (typeof resp.data[i].PatientMainDicomTags.PatientID !== "undefined") {
+          patientID = resp.data[i].PatientMainDicomTags.PatientID;
         }
 
-        if (p.IsStable) {
-          studies.push({
+        if (resp.data[i].IsStable) {
+          studies[selector].push({
             id: id,
             accessionNumber: accessionNumber,
             studyDate: studyDate,
@@ -103,10 +115,14 @@ function find(callback) {
             patientId: patientID,
             jobId: "",
           });
-        }
-      });
 
-      // continue
+          selector++;
+          if (selector == ASYNC_JOBS) {
+            selector = 0;
+          }
+        }
+      }
+
       callback();
     })
     .catch(function (error) {
@@ -115,39 +131,35 @@ function find(callback) {
     });
 }
 
-function checkOne() {
-  setTimeout(function() {
+function checkOne(queue) {
+  setTimeout(function () {
 
     axios
-      .get(config.orthancUrl + "/jobs/" + studies[0].jobId, {
-        httpsAgent: new https.Agent({
-            rejectUnauthorized: false
-        })
-      })
-      .then(function (response) {
-        if (response.data.Progress == 100) {
+      .get(config.orthancUrl + "/jobs/" + studies[queue][0].jobId, httpsConfig)
+      .then(function (resp) {
+        if (resp.data.Progress == 100) {
           logger.info(
             "READY job ID: " +
-              studies[0].jobId +
-              " patient: " +
-              studies[0].patientName +
-              " accessionNo: " +
-              studies[0].accessionNumber +
-              " studyDate: " +
-              studies[0].studyDate
+            studies[queue][0].jobId +
+            " patient: " +
+            studies[queue][0].patientName +
+            " accessionNo: " +
+            studies[queue][0].accessionNumber +
+            " studyDate: " +
+            studies[queue][0].studyDate
           );
-          
-          studies.shift();
-          sendOne();
+
+          studies[queue].shift();
+          sendOne(queue);
         } else {
-          checkOne();
+          checkOne(queue);
         }
       })
       .catch(function (error) {
         logger.error(error);
         if (errorCount) {
-          errorCount = errorCount-1;
-          checkOne();
+          errorCount = errorCount - 1;
+          checkOne(queue);
         } else {
           throw error;
         }
@@ -156,41 +168,38 @@ function checkOne() {
   }, 3000);
 }
 
-function sendOne() {
-  if (studies.length) {
+function sendOne(queue) {
+  if (studies[queue].length) {
 
     axios
       .post(config.orthancUrl + "/modalities/" + config.destination + "/store", {
         Asynchronous: true,
         Permissive: true,
-        Resources: [studies[0].id],
-        httpsAgent: new https.Agent({
-          rejectUnauthorized: false
-        })
-      })
-      .then(function (response) {
-        if (typeof response.data.ID !== "undefined") {
-          studies[0].jobId = response.data.ID;
+        Resources: [studies[queue][0].id],
+      }, httpsConfig)
+      .then(function (resp) {
+        if (typeof resp.data.ID !== "undefined") {
+          studies[queue][0].jobId = resp.data.ID;
         }
 
         logger.info(
           "START job ID: " +
-            studies[0].jobId +
-            " patient: " +
-            studies[0].patientName +
-            " accessionNo: " +
-            studies[0].accessionNumber +
-            " studyDate: " +
-            studies[0].studyDate
+          studies[queue][0].jobId +
+          " patient: " +
+          studies[queue][0].patientName +
+          " accessionNo: " +
+          studies[queue][0].accessionNumber +
+          " studyDate: " +
+          studies[queue][0].studyDate
         );
 
-        checkOne();
+        checkOne(queue);
       })
       .catch(function (error) {
         logger.error(error);
         if (errorCount) {
-          errorCount = errorCount-1;
-          sendOne();
+          errorCount = errorCount - 1;
+          sendOne(queue);
         } else {
           throw error;
         }
@@ -201,11 +210,13 @@ function sendOne() {
   }
 }
 
-find(function(error) {
+find(function (error) {
   if (error) {
     logger.error(error);
     throw error;
   } else {
-    sendOne();
+    for (let i=0; i < ASYNC_JOBS; i++) {
+      sendOne(i);
+    }
   }
 });

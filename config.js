@@ -1,6 +1,6 @@
 module.exports = {
-    orthancUrl: 'https://localhost:8042',
+    orthancUrl: 'http://192.168.0.102:8042',
     destination: 'PROTEUS',
-    modality: 'MG',
-    prevDays: 1,
+    modality: 'US\\MG\\MR\\CT',
+    prevDays: 30,
 };
